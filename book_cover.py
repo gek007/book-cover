@@ -2,6 +2,7 @@ import requests
 from IPython.display import Image
 import os
 from dotenv import load_dotenv
+from typing import Optional
 
 
 pushover_url = "https://api.pushover.net/1/messages.json"
@@ -74,7 +75,7 @@ class Book:
 
 
    @staticmethod
-   def get_book_cover_image(isbn: str) -> Image | None:
+   def get_book_cover_image(isbn: str) -> Optional[Image]:
         """Get book cover image from Open Library. No class/instance needed."""
 
         url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
@@ -83,19 +84,21 @@ class Book:
 
         # this function return image . 
         # display this image if status ok
-        if response.status_code == 200:
-            if len(response.content) > 0:
-                print(response.content)
+        if response.status_code == 200 and len(response.content) > 0:
+            content_type = response.headers.get("Content-Type", "")
+            if content_type.startswith("image/"):
+                print("Image found. Content-Type:", content_type)
                 return Image(response.content)
             else:
-                print("No content found")
+                print("Content is not an image. Content-Type:", content_type)
                 return None
         else:
-            print(f"Error: {response.status_code}")
+            print("No content found or bad response")
             return None
 
+
    @classmethod
-   def find_book_cover(cls, query: str) -> Image | None:
+   def find_book_cover(cls, query: str) -> Optional[Image]:
         """Find book cover image: fetches books via cls.get_books, then tries cover by ISBN."""
         books = cls.get_books(query)
         for book in books:
