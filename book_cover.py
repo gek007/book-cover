@@ -97,7 +97,7 @@ class Book:
     def get_book_cover_image(isbn: str) -> Optional[bytes]:
         """Get book cover image from Open Library. No class/instance needed."""
 
-        url = f"https://covers.openlibrary.org/b/isbn/{isbn}-S.jpg"
+        url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
 
         response = requests.get(url)
 
@@ -123,7 +123,12 @@ class Book:
             return None
 
         for book in books:
-            if book.isbns:
+            if (
+                book.isbns
+                and book.isbns != "—"
+                and book.isbns != ""
+                and len(book.isbns) > 5
+            ):
                 isbns = (
                     [s.strip() for s in book.isbns.split(",")]
                     if "," in book.isbns
@@ -136,7 +141,7 @@ class Book:
 
 
 if __name__ == "__main__":
-    query = "writer: John Green"
+    query = "books written by James Patterson"
     books = Book.get_books(query)
 
     print("\n\nfound", len(books), f" books for query: {query}")
@@ -147,18 +152,19 @@ if __name__ == "__main__":
         isbn = Book.get_book_isbn(books)
         if isbn:
             print(f"retrieved ISBN: {isbn}")
+
+            data = Book.get_book_cover_image(isbn)
+            if data:
+                print("retrieved image:")
+
+                # To display an image in a Jupyter notebook, use:
+                # from IPython.display import display
+                # display(image)
+
+                # If you are running a standard Python script, you can use PIL's show() method:
+                Book.show_image(data)
+            else:
+                print("No image found")
+
         else:
             print("No ISBN found")
-
-        data = Book.get_book_cover_image(isbn)
-        if data:
-            print("retrieved image:")
-
-            # To display an image in a Jupyter notebook, use:
-            # from IPython.display import display
-            # display(image)
-
-            # If you are running a standard Python script, you can use PIL's show() method:
-            Book.show_image(data)
-        else:
-            print("No image found")
