@@ -97,7 +97,7 @@ class Book:
     def get_book_cover_image(isbn: str) -> Optional[bytes]:
         """Get book cover image from Open Library. No class/instance needed."""
 
-        url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
+        url = f"https://covers.openlibrary.org/b/isbn/{isbn}-S.jpg"
 
         response = requests.get(url)
 
