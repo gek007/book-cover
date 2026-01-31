@@ -95,7 +95,7 @@ class Book:
 
     @staticmethod
     def get_book_cover_image_not_available() -> bytes:
-        with open("data/book_cover_not_available.jpeg", "rb") as f:
+        with open("image/book_cover_not_available.jpeg", "rb") as f:
             return f.read()
 
     @staticmethod
