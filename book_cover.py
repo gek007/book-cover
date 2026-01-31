@@ -3,13 +3,14 @@ from IPython.display import Image
 import os
 from dotenv import load_dotenv
 from typing import Optional
+from PIL import Image as PILImage
 
 
 pushover_url = "https://api.pushover.net/1/messages.json"
 
-class Book:
 
-   def __init__(
+class Book:
+    def __init__(
         self,
         title: str = "",
         author: str = "",
@@ -24,10 +25,10 @@ class Book:
         self.pushover_user = os.getenv("PUSHOVER_USER")
         self.pushover_token = os.getenv("PUSHOVER_TOKEN")
 
-   def __str__(self) -> str:
+    def __str__(self) -> str:
         return f"{self.title} — {self.author} ({self.year}) ISBN: {self.isbns}"
 
-   def push(self, message: str) -> None:
+    def push(self, message: str) -> None:
         payload = {
             "user": self.pushover_user,
             "token": self.pushover_token,
@@ -35,9 +36,27 @@ class Book:
         }
         requests.post(pushover_url, data=payload)
 
+    @staticmethod
+    def _in_jupyter() -> bool:
+        try:
+            return get_ipython() is not None  # type: ignore
+        except NameError:
+            return False
 
-   @classmethod
-   def get_books(cls, my_query: str, limit: int = 5) -> list["Book"]:
+    @staticmethod
+    def show_image(data: bytes) -> None:
+        if Book._in_jupyter():
+            from IPython.display import display, Image
+
+            display(Image(data))
+        else:
+            from PIL import Image as PILImage
+            import io
+
+            PILImage.open(io.BytesIO(data)).show()
+
+    @classmethod
+    def get_books(cls, my_query: str, limit: int = 3) -> list["Book"]:
         """Get books from Open Library API. Uses cls so subclasses get their type."""
         url = "https://openlibrary.org/search.json"
         params = {
@@ -54,7 +73,11 @@ class Book:
         for doc in data["docs"]:
             isbns = doc.get("isbn")
             if not isbns and "ia" in doc:
-                isbns = [s[5:] for s in doc["ia"] if isinstance(s, str) and s.startswith("isbn_")]
+                isbns = [
+                    s[5:]
+                    for s in doc["ia"]
+                    if isinstance(s, str) and s.startswith("isbn_")
+                ]
             isbn_str = ", ".join(isbns) if isbns else "—"
 
             book = cls(
@@ -65,30 +88,26 @@ class Book:
             )
             books.append(book)
 
-
         for book in books:
             print(book)
 
         return books
 
-
-
-
-   @staticmethod
-   def get_book_cover_image(isbn: str) -> Optional[Image]:
+    @staticmethod
+    def get_book_cover_image(isbn: str) -> Optional[bytes]:
         """Get book cover image from Open Library. No class/instance needed."""
 
         url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
 
         response = requests.get(url)
 
-        # this function return image . 
+        # this function return image .
         # display this image if status ok
         if response.status_code == 200 and len(response.content) > 0:
             content_type = response.headers.get("Content-Type", "")
             if content_type.startswith("image/"):
                 print("Image found. Content-Type:", content_type)
-                return Image(response.content)
+                return response.content
             else:
                 print("Content is not an image. Content-Type:", content_type)
                 return None
@@ -96,26 +115,56 @@ class Book:
             print("No content found or bad response")
             return None
 
+    @classmethod
+    def get_book_isbn(cls, books: Optional[list["Book"]]) -> Optional[str]:
+        """get ISBN from books."""
 
-   @classmethod
-   def find_book_cover(cls, query: str) -> Optional[Image]:
-        """Find book cover image: fetches books via cls.get_books, then tries cover by ISBN."""
-        books = cls.get_books(query)
+        if not books:
+            return None
+
         for book in books:
-            if book.isbns:
-                isbns = [s.strip() for s in book.isbns.split(",")] if "," in book.isbns else [book.isbns]
+            if (
+                book.isbns
+                and book.isbns != "—"
+                and book.isbns != ""
+                and len(book.isbns) > 5
+            ):
+                isbns = (
+                    [s.strip() for s in book.isbns.split(",")]
+                    if "," in book.isbns
+                    else [book.isbns]
+                )
                 for isbn in isbns:
-                    image = cls.get_book_cover_image(isbn)
-                    if image:
-                        return image
+                    if isbn:
+                        return isbn
         return None
 
 
+if __name__ == "__main__":
+    query = "books written by James Patterson"
+    books = Book.get_books(query)
 
+    print("\n\nfound", len(books), f" books for query: {query}")
+    if books:
+        for book in books:
+            print(book)
 
+        isbn = Book.get_book_isbn(books)
+        if isbn:
+            print(f"retrieved ISBN: {isbn}")
 
+            data = Book.get_book_cover_image(isbn)
+            if data:
+                print("retrieved image:")
 
+                # To display an image in a Jupyter notebook, use:
+                # from IPython.display import display
+                # display(image)
 
+                # If you are running a standard Python script, you can use PIL's show() method:
+                Book.show_image(data)
+            else:
+                print("No image found")
 
-
-    
+        else:
+            print("No ISBN found")
