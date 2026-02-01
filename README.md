@@ -9,4 +9,6 @@ Chat is an expert on artists and famous paintings they have painted. "
 
    
 
+<img width="1365" height="571" alt="image" src="https://github.com/user-attachments/assets/abfc465d-9fc0-447c-bd54-fbc26fb33ee2" />
+
 
