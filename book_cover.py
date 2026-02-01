@@ -94,6 +94,11 @@ class Book:
         return books
 
     @staticmethod
+    def get_book_cover_image_not_available() -> bytes:
+        with open("image/book_cover_not_available.jpeg", "rb") as f:
+            return f.read()
+
+    @staticmethod
     def get_book_cover_image(isbn: str) -> Optional[bytes]:
         """Get book cover image from Open Library. No class/instance needed."""
 
@@ -110,10 +115,11 @@ class Book:
                 return response.content
             else:
                 print("Content is not an image. Content-Type:", content_type)
-                return None
+                return Book.get_book_cover_image_not_available()
+
         else:
             print("No content found or bad response")
-            return None
+            return Book.get_book_cover_image_not_available()
 
     @classmethod
     def get_book_isbn(cls, books: Optional[list["Book"]]) -> Optional[str]:
