@@ -7,6 +7,6 @@ Chat is an expert on artists and famous paintings they have painted. "
     and if found it can display book cover image 
     (also using https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg)
 
+   
 
-    <img width="1365" height="571" alt="image" src="https://github.com/user-attachments/assets/e9da5105-7324-46a1-b6d7-df8b8cd8b049" />
 
